@@ -20,11 +20,12 @@ REFERENCE_YEAR = 2025
 @st.cache_data
 def carregar_e_pre_processar_dados(file_name, reference_year):
     try:
-        df = pd.read_csv(file_name)
+        # CORREÇÃO: Adicionando decimal=',' para garantir a leitura correta de números no formato brasileiro
+        df = pd.read_csv(file_name, decimal=',')
     except FileNotFoundError:
         return None
 
-    df = df.drop(columns=['year_of_reference', 'month_of_reference'], errors='ignore')
+    df = df.drop(columns=['year_of_reference', 'month_of_reference', 'fipe_code', 'authentication'], errors='ignore')
     
     df = df.rename(columns={'avg_price_brl': 'Selling_Price'})
     
