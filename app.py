@@ -24,7 +24,7 @@ def carregar_e_pre_processar_dados(file_name, reference_year):
     except FileNotFoundError:
         return None
 
-    df = df.drop(columns=['year_of_reference', 'month_of_reference', 'fipe_code', 'authentication'], errors='ignore')
+    df = df.drop(columns=['year_of_reference', 'month_of_reference'], errors='ignore')
     
     df = df.rename(columns={'avg_price_brl': 'Selling_Price'})
     
