@@ -20,8 +20,7 @@ REFERENCE_YEAR = 2025
 @st.cache_data
 def carregar_e_pre_processar_dados(file_name, reference_year):
     try:
-        # CORREÇÃO: Adicionando decimal=',' para garantir a leitura correta de números no formato brasileiro
-        df = pd.read_csv(file_name, decimal=',')
+        df = pd.read_csv(file_name)
     except FileNotFoundError:
         return None
 
@@ -29,11 +28,17 @@ def carregar_e_pre_processar_dados(file_name, reference_year):
     
     df = df.rename(columns={'avg_price_brl': 'Selling_Price'})
     
+    df['engine_size'] = pd.to_numeric(df['engine_size'], errors='coerce')
+    df['Selling_Price'] = pd.to_numeric(df['Selling_Price'], errors='coerce')
+
     df['age_years'] = reference_year - df['year_model']
     
     for col in ['brand', 'model', 'fuel', 'gear']:
         if col in df.columns:
             df[col] = df[col].fillna(df[col].mode()[0])
+            
+    if 'engine_size' in df.columns:
+        df['engine_size'] = df['engine_size'].fillna(df['engine_size'].mean())
 
     categorical_cols = ['brand', 'model', 'fuel', 'gear']
     df_encoded = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
@@ -78,17 +83,16 @@ def obter_features_usuario():
     min_engine = df_raw['engine_size'].min()
     max_engine = df_raw['engine_size'].max()
     avg_engine = df_raw['engine_size'].mean()
+    
     selected_engine_size = st.sidebar.number_input(f"Tamanho do Motor (em L, min {min_engine:.1f}, max {max_engine:.1f})", float(min_engine), float(max_engine), float(avg_engine), step=0.1)
 
     age_years = REFERENCE_YEAR - selected_year
     
-    # Criar um DataFrame de zeros com a mesma estrutura de colunas do X_train (importante para OHE)
     input_data = pd.DataFrame(np.zeros((1, X_train.shape[1])), columns=X_train.columns)
     
     input_data['age_years'] = age_years
     input_data['engine_size'] = selected_engine_size
     
-    # Preencher colunas One-Hot Encoding
     brand_col = f'brand_{selected_brand}'
     if brand_col in input_data.columns:
         input_data[brand_col] = 1
