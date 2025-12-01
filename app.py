@@ -150,11 +150,13 @@ try:
     col2.metric("MAE", f"R$ {mean_absolute_error(y_test, y_pred):,.2f}")
     col3.metric("RMSE", f"R$ {np.sqrt(mean_squared_error(y_test, y_pred)):,.2f}")
 
+    st.markdown("---")
     if valor_previsto < 0:
         st.error(f"Estimativa Inválida: R$ {valor_previsto:,.2f}")
         st.markdown("**Motivo:** A Regressão Linear gerou um valor negativo para este cenário (limitação matemática do modelo). Use o Random Forest.")
     else:
-        st.success(f"Preço FIPE Previsto: R$ {valor_previsto:,.2f}")
+        st.markdown(f"<h3 style='text-align: center; color: gray;'>Preço FIPE Previsto:</h3>", unsafe_allow_html=True)
+        st.markdown(f"<h1 style='text-align: center; color: #4CAF50;'>R$ {valor_previsto:,.2f}</h1>", unsafe_allow_html=True)
 
     st.subheader("3. Visualização")
     fig1, ax1 = plt.subplots(figsize=(10, 5))
@@ -165,8 +167,30 @@ try:
     ax1.set_ylabel("Previsto (R$)")
     st.pyplot(fig1)
 
+    if model_choice == "Random Forest":
+        st.markdown("#### Fatores que Mais Influenciam o Preço")
+        feature_importance_df = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False).head(15)
+        feature_importance_df = feature_importance_df[feature_importance_df > 0] 
+        
+        def limpar_nome_feature(name):
+            if name.startswith('brand_'): return f"Marca: {name[6:]}"
+            if name.startswith('model_'): return f"Modelo: {name[6:]}"
+            if name.startswith('fuel_'): return f"Comb.: {name[5:]}"
+            if name.startswith('gear_'): return f"Câmbio: {name[5:]}"
+            if name == 'age_years': return "Idade do Carro"
+            if name == 'engine_size': return "Tamanho do Motor (L)"
+            return name
+
+        feature_importance_df.index = feature_importance_df.index.map(limpar_nome_feature)
+        
+        fig2, ax2 = plt.subplots(figsize=(10, 6))
+        feature_importance_df.plot(kind='barh', ax=ax2, color='#4CAF50')
+        ax2.set_xlabel("Importância")
+        ax2.invert_yaxis()
+        st.pyplot(fig2)
+
 except Exception as e:
     st.error(f"Erro: {e}")
 
 st.markdown("---")
-st.caption("Sistema Otimizado para Streamlit Cloud (Low Memory Mode)")
+st.caption("Sistema Otimizado para Streamlit Cloud")
